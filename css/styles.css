@@ -36,4 +36,7 @@ path {
   top: 0;
   left: 0; }
 
+.leaflet-map-pane svg {
+  z-index: auto; }
+
 /*# sourceMappingURL=styles.css.map */
