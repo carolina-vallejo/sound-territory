@@ -4,13 +4,18 @@
 $family:'Roboto Condensed';
 $background:#181b21;
 $stroke:#007ba8;
+$fondoTimeline:#25282d;
+$stroke-border:rgba($stroke,
+1);
 
 /*--GENERALS-*/
 
 body {
   padding: 0;
   margin: 0;
+  overflow: hidden;
 }
+
 #mapid {
   height: 100vh;
   position: relative;
@@ -18,32 +23,105 @@ body {
   font-weight: 300;
   z-index: 0;
 }
-path{
-  stroke:$stroke;
-  stroke-width:1px;
-  fill:none;
+
+path {
+  stroke: $stroke;
+  stroke-width: 1px;
+  fill: none;
 }
-.leaflet-container{
+
+.leaflet-container {
   background: $background;
 }
-.leaflet-tile-pane{
+
+.leaflet-tile-pane {
   opacity: 0.2;
   filter: grayscale(100%);
   -webkit-filter: grayscale(100%);
 }
 
-.controls{
+.controls {
   position: absolute;
   z-index: 1;
   top: 0;
   left: 100px;
 }
-#pixicanvas{
+
+#pixicanvas {
   position: absolute;
   z-index: 12;
   top: 0;
   left: 0;
 }
-.leaflet-map-pane svg{
+
+.leaflet-map-pane svg {
   z-index: auto;
+}
+
+#slider {
+  position: fixed;
+  bottom: 20px;
+  width: 90%;
+  margin-left: 5%;
+}
+
+$h-drag-ranger:120px;
+$w-border-interactive: 6px;
+.resize-drag {
+  
+  color: white;
+  font-size: 20px;
+  font-family: sans-serif;
+  border-radius: 0;
+  padding: 15px;
+  margin: 0;
+  height: $h-drag-ranger;
+  width: 120px;
+  /* This makes things *much* easier */
+  box-sizing: border-box;
+  position: relative;
+  &:before {
+    position: absolute;
+    content: "";
+    display: block;
+    width: calc(100% - #{$w-border-interactive});
+    height: 100%;
+    top:0;
+    left: $w-border-interactive/2;
+    background-color: rgba(white, 0.1);
+  }
+}
+
+.sticks {
+  top: 0;
+  left: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  &:after,
+  &:before {
+    position: absolute;
+    content: "";
+    display: block;
+    width: $w-border-interactive;
+    height: 50%;
+    top: 25%;
+    background-color: $stroke-border;
+  }
+  &:after {
+    left: 0;
+  }
+  &:before {
+    right: 0;
+  }
+}
+
+.resize-container {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  left: 0%;
+  height: $h-drag-ranger;
+  background-color: $fondoTimeline;
 }
