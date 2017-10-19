@@ -1,15 +1,22 @@
 (function($, window, document) {
 
+  extendTopoJson();
+
   /**/
   var leafletMap = L.map('mapid', {
-      minZoom: 2,
+      minZoom: 1,
       maxZoom: 20
     })
     .setView([39.203343, -0.311333], 3);
 
-  var polygonLatLngs = [39.203343, -0.311333];
+  var polygonLatLngs = [
+    [51.509, -0.08],
+    [51.503, -0.06],
+    [51.51, -0.047],
+    [51.509, -0.08]
+  ];
 
-  var coords;
+  var coords, arrCoords=[];
 
 
   var graphics = new PIXI.Graphics();
@@ -20,7 +27,16 @@
 
   const ticker = new PIXI.ticker.Ticker();
 
+  var width = window.innerWidth,
+    height = window.innerHeight,
+    active = d3.select(null);
 
+  var projection = d3.geoMercator()
+    .scale(190)
+    .translate([width / 2, height / 1.6]);
+
+  var path = d3.geoPath()
+    .projection(projection);
 
   var firstDraw = true;
   var prevZoom;
@@ -30,17 +46,21 @@
 
   var animation, factorScale, renderer, container;
 
+  var dataCoordsPixi;
+
 
   $(function() {
 
-    dragResize();
 
     //////////////////////////TOPOJSON
     var topoLayer = new L.GeoJSON();
+    var topoLayer2 = new L.TopoJSON();
 
 
     d3.json('map/map-simplify.geojson', function(error, geomap) {
       if (error) throw error;
+
+
 
       topoLayer.addData(geomap);
       topoLayer.addTo(leafletMap);
@@ -48,117 +68,37 @@
 
 
       /**/
-          d3.csv('../conflict-project/json/ged50.csv', function(error, datacoords) {
-            if (error) throw error;
+      d3.json('map/topomap.json', function(error, datacoords) {
+        if (error) throw error;
 
-            console.log(datacoords[0]);
+        /*
 
-            var years = d3.nest()
-              .key(function(d){
-                return d.date_start;
-              })
-              .sortKeys(d3.ascending)
-              .entries(datacoords);
-
-              console.log(years);
-
-            //pixiLayer(datacoords);
-
-          }); //---GET DATA
+                
+        */
 
 
-        
+        var arrGeo = geomap.features.map(function(d) {
+          return d.geometry.coordinates;
+        });
+
+        //console.log(arrGeo);
+        pixiLayer(arrGeo);
+
+
+      }); //---GET DATA
+
+
+
 
     }); //---GET POLYGONS
 
   }); ///--- ON READY
 
 
-  /////////////////INTERACT
-
-  function dragResize() {
-
-    var element = document.getElementById('resize-drag'),
-      x = 0,
-      y = 0;
-
-    interact('.resize-drag')
-      .draggable({
-        autoScroll: false,
-        onmove: window.dragMoveListener,
-        restrict: {
-          restriction: element.parentNode,
-          elementRect: { top: 0, left: 0, bottom: 1, right: 1 },
-          endOnly: false
-        }
-      })
-      .resizable({
-        //autoScroll: false,
-        snap: {
-          targets: [
-            // snap to the point (0, 450)
-            interact.createSnapGrid({ x: 30, y: 30 })
-            //{ x: 0, y: 450, range: 50 },
-
-            // snap only the y coord to 100
-            // i.e. move horizontally at y=100
-            //{ y: 10, range: Infinity }
-          ]
-        },
-        preserveAspectRatio: false,
-        edges: { left: true, right: true, bottom: false, top: false },
-        restrict: {
-          restriction: element.parentNode,
-          //elementRect: { top: 0, left: 0, bottom: 1, right: 1 },
-          //endOnly: false
-        }
-
-      })
-      .on('resizemove', function(event) {
-        var target = event.target,
-          x = (parseFloat(target.getAttribute('data-x')) || 0),
-          y = (parseFloat(target.getAttribute('data-y')) || 0);
-
-        // update the element's style
-        target.style.width = event.rect.width + 'px';
-        target.style.height = event.rect.height + 'px';
-
-        // translate when resizing from top or left edges
-        x += event.deltaRect.left;
-        y += event.deltaRect.top;
-
-        target.style.webkitTransform = target.style.transform =
-          'translate(' + x + 'px,' + y + 'px)';
-
-        target.setAttribute('data-x', x);
-        target.setAttribute('data-y', y);
-        //target.textContent = Math.round(event.rect.width) + '×' + Math.round(event.rect.height);
-      });
-
-  }
-
-
-  function dragMoveListener(event) {
-    var target = event.target,
-      // keep the dragged position in the data-x/data-y attributes
-      x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-      y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-    // translate the element
-    target.style.webkitTransform =
-      target.style.transform =
-      'translate(' + x + 'px, ' + y + 'px)';
-
-    // update the posiion attributes
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
-  }
-
-  // this is used later in the resizing and gesture demos
-  window.dragMoveListener = dragMoveListener;
-
 
   function pixiLayer(data) {
+
+
 
     //----
     var loader = new PIXI.loaders.Loader();
@@ -187,32 +127,51 @@
           //------
           factorScale = ((1 - scale) * 100);
 
+
           if (firstDraw) {
-            coords = project(polygonLatLngs);
+            //coords = project(polygonLatLngs);
+            //console.log(data);
+
+            for (var i = 0; i < data.length; i++) {
+
+              //console.log(data[i].length);
+              var iterArr = data[i].length === 1 ? data[i] : [0,0];
+
+
+              var elcoords = iterArr.map(function(coords) {
+               console.log(coords);
+                return project(coords);
+              });   
+              arrCoords.push(elcoords);    
+            }
 
           }
-          if (firstDraw && prevZoom !== zoom) {
 
+          if (firstDraw || prevZoom !== zoom) {
 
             /*
 
-            var myTween = TweenMax.to(markerSprite, 2, {
-              width: 10000,
-              height: 10000,
-              yoyo: true,
-              ease: Power4.easeInOut,
-              repeat: 1,
-            });
-
-
-            //TweenMax.ticker.addEventListener('tick', render);
-            // markerSprite.on('pointerdown', onClick);
-
-            TweenMax.globalTimeScale(1);
-
+            for (var i = 0; i < arrCoords.length; i++) {
+              graphics.clear();
+              graphics.lineStyle(3 / scale, 0x3388ff, 1);
+              graphics.beginFill(0x3388ff, 0.2);
+              arrCoords[i].forEach(function(coords, index) {
+                if (index == 0) graphics.moveTo(coords.x, coords.y);
+                else graphics.lineTo(coords.x, coords.y);
+              });
+              graphics.endFill();  
+            }
             */
+          
+          }
+
+/*
+          if (firstDraw && prevZoom !== zoom) {
+
+
+
             ////..........PARTICLES
-            var numpart = 1000;
+            var numpart = data.length;
             var sprites = new PIXI.particles.ParticleContainer(numpart, {
               scale: true,
               position: true,
@@ -231,8 +190,12 @@
 
               var dude = new PIXI.Sprite(resources.circle.texture);
 
+              console.log(data[i][0]);
 
-              var lacoord = project([parseFloat(data[i].latitude), parseFloat(data[i].longitude)]);
+              //data[i].latitude = data[i][0] === null ? 0 : data[i][0];
+              //data[i].longitude = data[i][1] === null ? 0 : data[i][1];
+
+              var lacoord = project([parseFloat(data[i][0]), parseFloat(data[i][1])]);
 
               dude.x = lacoord.x;
               dude.y = lacoord.y;
@@ -281,6 +244,8 @@
 
 
           }
+*/
+
           if (!firstDraw && prevZoom !== zoom) {
 
             console.log('zzzz');
@@ -313,7 +278,7 @@
       $('#play-animation').show();
       ticker.stop();
 
-      TweenMax.ticker.removeEventListener('tick', render);
+      //TweenMax.ticker.removeEventListener('tick', render);
     });
 
     $('#play-animation').on('click', function() {
@@ -329,6 +294,24 @@
 
 
   } //----PIXILAYER
+  function extendTopoJson() {
+    L.TopoJSON = L.GeoJSON.extend({
+      addData: function(jsonData) {
+        if (jsonData.type === "Topology") {
+          for (key in jsonData.objects) {
+            geojson = topojson.feature(jsonData, jsonData.objects[key]);
+            L.GeoJSON.prototype.addData.call(this, geojson);
+          }
+        } else {
+          L.GeoJSON.prototype.addData.call(this, jsonData);
+        }
+      }
+    });
+    /* 
+    The MIT License (MIT)
+    Copyright (c) 2013 Ryan Clark
+    */
+  }
 
 
   function disableInteraction(map, idmap) {
