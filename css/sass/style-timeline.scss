@@ -1,0 +1,72 @@
+@import 'functions';
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700');
+//-----VARIABLES
+$family:'Roboto Condensed';
+$background: #191e24;
+$stroke: #007ba8;
+$fondoTimeline: #25282d;
+$stroke-border: rgba($stroke,
+1);
+
+/*--GENERALS-*/
+
+body {
+  padding: 0;
+  margin: 0;
+  background: $background;
+  font-family: $family;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -o-font-smoothing: antialiased;
+  overflow-x: hidden; 
+}
+
+.unit {
+  stroke-width: 0px;
+  fill-opacity: 0.5;
+  fill: none;
+}
+
+text {
+  font-size: 16px;
+  fill: white;
+  fill-opacity: 0.5;
+  font-family: $family;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -o-font-smoothing: antialiased;
+  font-weight: 300;
+}
+
+.y-axis {
+  text {
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+}
+
+.domain {
+  display: none;
+}
+
+.tick {
+  line {
+    stroke-opacity: 0.15;
+    stroke-width: 1;
+    stroke: white;
+    stroke-dasharray: 2, 2
+  }
+}
+
+.x-axis {
+  .tick {
+    line {
+      stroke-opacity: 0.1;
+      stroke-width: 1;
+      stroke: white;
+      stroke-dasharray: none
+    }
+  }
+}

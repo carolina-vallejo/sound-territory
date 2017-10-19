@@ -47,18 +47,27 @@
 
 
 
-      /*
+      /**/
           d3.csv('../conflict-project/json/ged50.csv', function(error, datacoords) {
             if (error) throw error;
 
-            //console.log(datacoords);
+            console.log(datacoords[0]);
+
+            var years = d3.nest()
+              .key(function(d){
+                return d.date_start;
+              })
+              .sortKeys(d3.ascending)
+              .entries(datacoords);
+
+              console.log(years);
 
             //pixiLayer(datacoords);
 
           }); //---GET DATA
 
 
-        */
+        
 
     }); //---GET POLYGONS
 
