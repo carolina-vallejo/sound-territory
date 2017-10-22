@@ -7,7 +7,8 @@
       minZoom: 1,
       maxZoom: 20
     })
-    .setView([39.203343, -0.311333], 3);
+    .setView([39.475371, -0.377391], 3)
+    .setZoom(13);
 
   var polygonLatLngs = [
     [51.509, -0.08],
@@ -16,7 +17,7 @@
     [51.509, -0.08]
   ];
 
-  var coords, arrCoords=[];
+  var coords, arrCoords = [];
 
 
   var graphics = new PIXI.Graphics();
@@ -49,6 +50,7 @@
   var dataCoordsPixi;
 
 
+
   $(function() {
 
 
@@ -68,20 +70,31 @@
 
 
       /**/
-      d3.json('map/topomap.json', function(error, datacoords) {
+      d3.json('map/vlc-streets.json', function(error, datacoords) {
         if (error) throw error;
 
-        /*
+        var simplification= topojson.simplify(datacoords);
 
-                
-        */
+        topoLayer2.addData(datacoords);
 
 
-        var arrGeo = geomap.features.map(function(d) {
-          return d.geometry.coordinates;
-        });
 
-        //console.log(arrGeo);
+
+        var arrGeo = [];
+        for (var keys in topoLayer2._layers) {
+
+          //console.log(topoLayer2._layers[keys]._latlngs); 
+          arrGeo.push(topoLayer2._layers[keys]._latlngs);
+
+        }
+
+        console.log(arrGeo)
+
+
+
+
+
+
         pixiLayer(arrGeo);
 
 
@@ -103,14 +116,15 @@
     //----
     var loader = new PIXI.loaders.Loader();
     loader
-      .add('circle', 'circle-blue-blur.png')
+      .add('circle', 'circle-blue.png')
       .add('gusanito', 'gusanito.png')
+      .add('line', 'line.gif')
 
     var blurFilter1 = new PIXI.filters.BlurFilter();
 
     loader.load(function(loader, resources) {
 
-      console.log(resources.circle.texture);
+      ////console.log(resources.circle.texture);
 
       var pixiOverlay = L.pixiOverlay(function(utils) {
 
@@ -119,6 +133,8 @@
           renderer = utils.getRenderer();
           var project = utils.latLngToLayerPoint;
           var scale = utils.getScale();
+
+
 
           if (frame) {
             frame = null;
@@ -129,137 +145,105 @@
 
 
           if (firstDraw) {
-            //coords = project(polygonLatLngs);
-            //console.log(data);
-
-            for (var i = 0; i < data.length; i++) {
-
-              //console.log(data[i].length);
-              var iterArr = data[i].length === 1 ? data[i] : [0,0];
 
 
-              var elcoords = iterArr.map(function(coords) {
-               console.log(coords);
-                return project(coords);
-              });   
-              arrCoords.push(elcoords);    
-            }
+
 
           }
 
-          if (firstDraw || prevZoom !== zoom) {
 
-            /*
-
-            for (var i = 0; i < arrCoords.length; i++) {
-              graphics.clear();
-              graphics.lineStyle(3 / scale, 0x3388ff, 1);
-              graphics.beginFill(0x3388ff, 0.2);
-              arrCoords[i].forEach(function(coords, index) {
-                if (index == 0) graphics.moveTo(coords.x, coords.y);
-                else graphics.lineTo(coords.x, coords.y);
-              });
-              graphics.endFill();  
-            }
-            */
-          
-          }
-
-/*
           if (firstDraw && prevZoom !== zoom) {
+            //console.log('xxx');
+            //console.log(arrCoords);
+
+            drawPolyline(data);
+
+            function drawPolyline(arr) {
+
+              console.log()
+              console.log(hex(0,0,0));
 
 
+              var use_sprites = false; // false;
 
-            ////..........PARTICLES
-            var numpart = data.length;
-            var sprites = new PIXI.particles.ParticleContainer(numpart, {
-              scale: true,
-              position: true,
-              rotation: true,
-              uvs: true,
-              alpha: true
-            });
+              var buffer = new PIXI.Graphics();
+              
+              buffer.lineStyle(0.15, '0xa02485', 0.5);
+                  buffer.beginFill(0xFFFF0B, 0.0);
 
-
-            container.addChild(sprites);
-
-            var maggots = [];
-            var totalSprites = renderer instanceof PIXI.WebGLRenderer ? numpart : 10;
-
-            for (var i = 0; i < totalSprites; i++) {
-
-              var dude = new PIXI.Sprite(resources.circle.texture);
-
-              console.log(data[i][0]);
-
-              //data[i].latitude = data[i][0] === null ? 0 : data[i][0];
-              //data[i].longitude = data[i][1] === null ? 0 : data[i][1];
-
-              var lacoord = project([parseFloat(data[i][0]), parseFloat(data[i][1])]);
-
-              dude.x = lacoord.x;
-              dude.y = lacoord.y;
-              dude.width = 1 * factorScale;
-              dude.height = 1 * factorScale;
-
-
-              dude.anchor.set(0.5);
-
-              dude.tint = Math.random() * 0xFFFFFF;
-
-              //dude.blendMode = PIXI.BLEND_MODES.MULTIPLY;
-
-
-              maggots.push(dude);
-              sprites.addChild(dude);
-
-              //sprites.filters = blurFilter1;
-            }
-
-
-            ticker.speed = 1;
-            //ticker.stop();
-            var num = 0;
-            ticker.add(function(deltaTime) {
-
-              //console.log(deltaTime);
-
-
-              // iterate through the sprites and update their position
-              for (var i = 0; i < maggots.length; i++) {
-
-                //var size = getRnd(0.0001, 0.001);
-                num += 1 * (0.0001);
-
-                maggots[i].width = num * factorScale;
-                maggots[i].height = num * factorScale;
-
+              if (use_sprites == false) {
+                container.addChild(buffer);
               }
 
-              renderer.render(container);
-            });
+
+              console.log(arr.length);
+              graphics.clear();
+
+              var polys = [];
+              for (var i = 0; i < arr.length; i++) {
+
+                var subPolys = [];
+
+                arr[i].forEach(function(coords, index) {
+                  subPolys.push(project(coords).x);
+                  subPolys.push(project(coords).y);
+                });
+
+                polys.push(subPolys);
 
 
-            //ticker.start();
+              } //---end for
+
+              console.log(polys);
+
+
+              for (var i = 0; i < polys.length; i++) {
+                if (use_sprites == false) {
+                  buffer.drawPolygon(polys[i]);
+                } else {
+                  var b = new PIXI.Graphics();
+                  //b.lineStyle(0.5, '0xa02485');
+                  //b.beginFill('none');
+                  b.drawPolygon(polys[i]);
+                  var tex = b.generateTexture();
+                  var sprite = new PIXI.Sprite(tex);
+                  sprite.position.x = polys[i][0];
+                  sprite.position.y = polys[i][1];
+                  container.addChild(sprite);
+                }
+              }
+
+
+
+              console.log('xx');
+
+
+
+
+            } //---FINAL DRAW
+
+
 
 
           }
-*/
+
+
 
           if (!firstDraw && prevZoom !== zoom) {
 
-            console.log('zzzz');
+            //console.log('zzzz');
+            console.log(zoom);
           }
           firstDraw = false;
           prevZoom = zoom;
           renderer.render(container);
 
           if (renderer instanceof PIXI.CanvasRenderer) {
-            console.log('//canvas renderer');
+            //console.log('//canvas renderer');
 
           } else {
             //webgl renderer
-            console.log('//canvas webgl');
+            //console.log('//canvas webgl');
           }
 
 
@@ -276,7 +260,7 @@
       //cancelAnimationFrame(animation);
       $(this).hide();
       $('#play-animation').show();
-      ticker.stop();
+      //ticker.stop();
 
       //TweenMax.ticker.removeEventListener('tick', render);
     });
@@ -288,7 +272,7 @@
 
       //  TweenMax.ticker.addEventListener('tick', render);
 
-      ticker.start();
+      //ticker.start();
 
     }); //----PIXI OVERLAY
 
@@ -352,5 +336,9 @@
   function getRnd(max, min) {
     return Math.random() * (max - min) + min;
   }
+
+function hex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
 
 }(window.jQuery, window, document));
