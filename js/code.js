@@ -27,6 +27,7 @@
 
 
   const ticker = new PIXI.ticker.Ticker();
+  ticker.speed = 0.25;
 
   var width = window.innerWidth,
     height = window.innerHeight,
@@ -209,12 +210,11 @@
 
             container.addChild(circle);
 
-            //var matrix = new PIXI.Matrix();
 
 
-            for (var i = 0; i < 2; i++) {
+            for (var i = 0; i < 1; i++) {
               var pos = [data[27 + i][0].lat, data[27 + i][0].lng];
-              circle.drawCircle(project(pos).x, project(pos).y, 1);
+              circle.drawRect(project(pos).x, project(pos).y, 1, 1);
               circle.transform.pivot.set(project(pos).x, project(pos).y);
               circle.transform.position.set(project(pos).x, project(pos).y);
 
@@ -222,55 +222,46 @@
 
             console.log(circle.transform.position);
 
+            var counter = 0;
+            var posCircle = { score: 0 };
 
 
 
-
-
-
-
-            ticker.speed = 0.05;
-            ticker.stop();
-
-            var contador = 1;
-            var largo = 20;
-
-            ticker.add(function(deltaTime) {
-
-              //console.log(deltaTime);
-
-              //  circle.clear();
-              // iterate through the sprites and update their position
-              if (contador === largo - 1) {
-                ticker.stop();
-              }
-              console.log()
-
-
-
-              
-
-              for (var i = 0; i < 2; i++) {
-
-
-                var pos2 = [data[27+i][contador].lat, data[27+i][contador].lng]
-                circle.transform.position.set(project(pos2).x, project(pos2).y);
-
-              }
-
-
-
-              contador++;
-
-
-
-
-              renderer.render(container);
+            var glowTween = TweenMax.to(posCircle, 1, {
+              score: "+=20",
+              roundProps: "score",
+              onUpdate: updateHandler,
+              ease: Linear.easeNone,
+              repeat:2, 
+              onRepeat:onRepeat
             });
 
 
+            function onRepeat() {
 
-            ticker.start();
+            }
+
+            function updateHandler() {
+              console.log(posCircle.score);
+            }
+
+            glowTween.eventCallback("onComplete", kill, ["param1", "param2"]);
+
+            TweenMax.ticker.addEventListener('tick', render);
+
+
+
+            function kill() {
+              console.log('kill');
+              //glowTween.kill();
+              TweenMax.ticker.removeEventListener('tick', render);
+            }
+
+
+
+
+
+
 
 
 
@@ -303,15 +294,18 @@
 
     }); //---LOADER
 
+    function render() {
+      renderer.render(container);
+    }
+
 
     //---STOP BUTTON
     $('#stop-animation').on('click', function() {
       //cancelAnimationFrame(animation);
       $(this).hide();
       $('#play-animation').show();
-      //ticker.stop();
 
-      //TweenMax.ticker.removeEventListener('tick', render);
+      TweenMax.ticker.removeEventListener('tick', render);
     });
 
     $('#play-animation').on('click', function() {
@@ -319,9 +313,8 @@
       $(this).hide();
       $('#stop-animation').show();
 
-      //  TweenMax.ticker.addEventListener('tick', render);
+      TweenMax.ticker.addEventListener('tick', render);
 
-      ticker.start();
 
     }); //----PIXI OVERLAY
 
