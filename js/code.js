@@ -8,7 +8,8 @@
       maxZoom: 20
     })
     .setView([39.475371, -0.377391], 3)
-    .setZoom(13);
+    .setZoom(12);
+
 
   var polygonLatLngs = [
     [51.509, -0.08],
@@ -20,10 +21,9 @@
   var coords, arrCoords = [];
 
 
-  var graphics = new PIXI.Graphics();
 
   var pixiContainer = new PIXI.Container();
-  pixiContainer.addChild(graphics);
+
 
 
   const ticker = new PIXI.ticker.Ticker();
@@ -31,13 +31,6 @@
   var width = window.innerWidth,
     height = window.innerHeight,
     active = d3.select(null);
-
-  var projection = d3.geoMercator()
-    .scale(190)
-    .translate([width / 2, height / 1.6]);
-
-  var path = d3.geoPath()
-    .projection(projection);
 
   var firstDraw = true;
   var prevZoom;
@@ -50,8 +43,21 @@
   var dataCoordsPixi;
 
 
+  var white = '#FFFFFF';
+  var blue = '#60c1dc';
+  var pink = '#e68fc3';
+  var orange = '#f7cd83';
+  var green = '#55e851';
+  var violet = '#a651e8';
+  var red = '#e85151';
+  var yellow = '#f7e883';
+
+  var colors = chroma
+    .scale([blue, violet, pink, red, yellow, orange]).colors(10);
+
 
   $(function() {
+
 
 
     //////////////////////////TOPOJSON
@@ -59,41 +65,24 @@
     var topoLayer2 = new L.TopoJSON();
 
 
-    d3.json('map/map-simplify.geojson', function(error, geomap) {
+    d3.json('data/countries-coords.json', function(error, mydata) {
       if (error) throw error;
 
+      console.log(mydata);
 
-
-      topoLayer.addData(geomap);
-      topoLayer.addTo(leafletMap);
-
-
-
-      /**/
       d3.json('map/vlc-streets.json', function(error, datacoords) {
         if (error) throw error;
 
-        var simplification= topojson.simplify(datacoords);
+        var simplification = topojson.simplify(datacoords);
 
         topoLayer2.addData(datacoords);
 
-
-
-
         var arrGeo = [];
         for (var keys in topoLayer2._layers) {
-
-          //console.log(topoLayer2._layers[keys]._latlngs); 
           arrGeo.push(topoLayer2._layers[keys]._latlngs);
-
         }
 
         console.log(arrGeo)
-
-
-
-
-
 
         pixiLayer(arrGeo);
 
@@ -146,38 +135,29 @@
 
           if (firstDraw) {
 
-
-
-
           }
 
 
           if (firstDraw && prevZoom !== zoom) {
-            //console.log('xxx');
-            //console.log(arrCoords);
+
+
+            var buffer = new PIXI.Graphics();
+
+            var use_sprites = false; // false;
+            if (use_sprites == false) {
+              container.addChild(buffer);
+            }
 
             drawPolyline(data);
 
             function drawPolyline(arr) {
 
-              console.log()
-              console.log(hex(0,0,0));
 
 
-              var use_sprites = false; // false;
 
-              var buffer = new PIXI.Graphics();
-              
-              buffer.lineStyle(0.15, '0xa02485', 0.5);
-                  buffer.beginFill(0xFFFF0B, 0.0);
+              buffer.lineStyle(0.15, '0xFFFFFF', 0.2);
+              buffer.beginFill(0xFFFF0B, 0.0);
 
-              if (use_sprites == false) {
-                container.addChild(buffer);
-              }
-
-
-              console.log(arr.length);
-              graphics.clear();
 
               var polys = [];
               for (var i = 0; i < arr.length; i++) {
@@ -199,21 +179,12 @@
 
               for (var i = 0; i < polys.length; i++) {
                 if (use_sprites == false) {
+
+                  //buffer.lineStyle(0.15, hex(255, 255, 255), 0.0);
                   buffer.drawPolygon(polys[i]);
-                } else {
-                  var b = new PIXI.Graphics();
-                  //b.lineStyle(0.5, '0xa02485');
-                  //b.beginFill('none');
-                  b.drawPolygon(polys[i]);
-                  var tex = b.generateTexture();
-                  var sprite = new PIXI.Sprite(tex);
-                  sprite.position.x = polys[i][0];
-                  sprite.position.y = polys[i][1];
-                  container.addChild(sprite);
+
                 }
               }
-
-
 
               console.log('xx');
 
@@ -222,6 +193,84 @@
 
             } //---FINAL DRAW
 
+
+            //----ANIMATED CIRCLE
+
+            // buffer.clear();
+            var circle = new PIXI.Graphics();
+
+
+            circle.lineStyle(0.15, '0xa02485', 0);
+            circle.beginFill(0xe91e63, 1);
+
+
+
+
+
+            container.addChild(circle);
+
+            //var matrix = new PIXI.Matrix();
+
+
+            for (var i = 0; i < 2; i++) {
+              var pos = [data[27 + i][0].lat, data[27 + i][0].lng];
+              circle.drawCircle(project(pos).x, project(pos).y, 1);
+              circle.transform.pivot.set(project(pos).x, project(pos).y);
+              circle.transform.position.set(project(pos).x, project(pos).y);
+
+            }
+
+            console.log(circle.transform.position);
+
+
+
+
+
+
+
+
+            ticker.speed = 0.05;
+            ticker.stop();
+
+            var contador = 1;
+            var largo = 20;
+
+            ticker.add(function(deltaTime) {
+
+              //console.log(deltaTime);
+
+              //  circle.clear();
+              // iterate through the sprites and update their position
+              if (contador === largo - 1) {
+                ticker.stop();
+              }
+              console.log()
+
+
+
+              
+
+              for (var i = 0; i < 2; i++) {
+
+
+                var pos2 = [data[27+i][contador].lat, data[27+i][contador].lng]
+                circle.transform.position.set(project(pos2).x, project(pos2).y);
+
+              }
+
+
+
+              contador++;
+
+
+
+
+              renderer.render(container);
+            });
+
+
+
+            ticker.start();
 
 
 
@@ -272,7 +321,7 @@
 
       //  TweenMax.ticker.addEventListener('tick', render);
 
-      //ticker.start();
+      ticker.start();
 
     }); //----PIXI OVERLAY
 
@@ -291,10 +340,7 @@
         }
       }
     });
-    /* 
-    The MIT License (MIT)
-    Copyright (c) 2013 Ryan Clark
-    */
+
   }
 
 
@@ -337,8 +383,8 @@
     return Math.random() * (max - min) + min;
   }
 
-function hex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
+  function hex(r, g, b) {
+    return "0x" + ((1 << 24) + (parseInt(r) << 16) + (parseInt(g) << 8) + parseInt(b)).toString(16).slice(1);
+  }
 
 }(window.jQuery, window, document));
