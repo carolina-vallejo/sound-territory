@@ -7,8 +7,8 @@
       minZoom: 1,
       maxZoom: 20
     })
-    .setView([39.475371, -0.377391], 3)
-    .setZoom(12);
+    .setView([39.4351171,-0.3138474])
+    .setZoom(14);
 
 
   var polygonLatLngs = [
@@ -205,16 +205,12 @@
             circle.beginFill(0xe91e63, 1);
 
 
-
-
-
             container.addChild(circle);
-
 
 
             for (var i = 0; i < 1; i++) {
               var pos = [data[27 + i][0].lat, data[27 + i][0].lng];
-              circle.drawRect(project(pos).x, project(pos).y, 1, 1);
+              circle.drawCircle(project(pos).x, project(pos).y, 1);
               circle.transform.pivot.set(project(pos).x, project(pos).y);
               circle.transform.position.set(project(pos).x, project(pos).y);
 
@@ -227,22 +223,37 @@
 
 
 
-            var glowTween = TweenMax.to(posCircle, 1, {
-              score: "+=20",
+            var glowTween = TweenMax.to(posCircle, 0.5, {
+              score: 10,
               roundProps: "score",
               onUpdate: updateHandler,
-              ease: Linear.easeNone,
-              repeat:2, 
-              onRepeat:onRepeat
+              ease:  Linear.ease,
+              repeat: 10,
+              onRepeat: onRepeat
             });
 
 
-            function onRepeat() {
+          var counterRepeat = 0;
+            var i= d3.interpolateArray([data[27][1+counterRepeat].lat, data[27][1+counterRepeat].lng], [data[27][2+counterRepeat].lat, data[27][2+counterRepeat].lng]);
+            
 
+            function onRepeat() {
+              console.log('repeat')
+              counterRepeat++;
+              i = d3.interpolateArray([data[27][1+counterRepeat].lat, data[27][1+counterRepeat].lng], [data[27][2+counterRepeat].lat, data[27][2+counterRepeat].lng]);
+              
             }
+            
+
+
+            
 
             function updateHandler() {
-              console.log(posCircle.score);
+
+              circle.transform.position.set(project(i(posCircle.score*0.1, posCircle.score*0.1)).x, project(i(posCircle.score*0.1, posCircle.score*0.1)).y);
+
+              counter++;
+              
             }
 
             glowTween.eventCallback("onComplete", kill, ["param1", "param2"]);
@@ -253,17 +264,9 @@
 
             function kill() {
               console.log('kill');
-              //glowTween.kill();
+              glowTween.kill();
               TweenMax.ticker.removeEventListener('tick', render);
             }
-
-
-
-
-
-
-
-
 
           }
 
