@@ -7,8 +7,8 @@
       minZoom: 1,
       maxZoom: 20
     })
-    .setView([39.4351171, -0.3138474])
-    .setZoom(14);
+    .setView([39.475339, -0.376703])
+    .setZoom(13);
 
 
   var polygonLatLngs = [
@@ -71,10 +71,12 @@
 
       //console.log(mydata);
 
+      //---OJO VER SI EL GEOJSON TIENE FEATURES
+
       d3.json('map/vlc-streets.json', function(error, datacoords) {
         if (error) throw error;
 
-        var simplification = topojson.simplify(datacoords);
+        //console.log(datacoords);
 
         topoLayer2.addData(datacoords);
 
@@ -83,7 +85,19 @@
           arrGeo.push(topoLayer2._layers[keys]._latlngs);
         }
 
-        //console.log(arrGeo)
+        console.log(arrGeo)
+
+/*
+
+        var vlcByLarge = d3.nest()
+          .key(function(d) { 
+            return parseInt(d.length); 
+          })
+          .sortKeys(d3.descending)
+          .entries(arrGeo);
+console.log(vlcByLarge);
+*/
+          
 
         pixiLayer(arrGeo);
 
@@ -142,209 +156,222 @@
           if (firstDraw && prevZoom !== zoom) {
 
 
-            var buffer = new PIXI.Graphics();
+            function Riders() {
 
-            var use_sprites = false; // false;
-            if (use_sprites == false) {
-              container.addChild(buffer);
-            }
+              var starterNum = 9000;
 
-            drawPolyline(data);
+              this.val = 1;
+              this.loopLength = 5;
 
-            function drawPolyline(arr) {
+              var markerSprite = new PIXI.Sprite(resources.circle.texture);
+              var counterRepeat = 0;
+
+              //-----------
+              var numpart = 1000;
+              var ridersParticles = new PIXI.particles.ParticleContainer(numpart, {
+                scale: true,
+                position: true,
+                rotation: true,
+                uvs: true,
+                alpha: true
+              });
+              container.addChild(ridersParticles);
+
+              var ridersArr = [];
+              var totalRiders = renderer instanceof PIXI.WebGLRenderer ? numpart : 1;
+              var inArr = [];
+              var stateArr = [];
+
+              for (var i = totalRiders; i--;) {
+                var rider = new PIXI.Sprite(resources.circle.texture);
+                var pos = [data[starterNum + i][0].lat, data[starterNum + i][0].lng];
+
+                rider.x = project(pos).x;
+                rider.y = project(pos).y;
+
+                rider.anchor.set(0.5);
+                rider.scale.set(1 * 0.02);
+                ridersArr.push(rider);
 
 
+                ridersParticles.addChild(rider);
 
 
-              buffer.lineStyle(0.15, '0xFFFFFF', 0.2);
-              buffer.beginFill(0xFFFF0B, 0.0);
+                if (counterRepeat + 1 < data[starterNum + i].length) {
 
+                  /*
+                  var eachIn = d3.interpolateArray(
+                    [data[starterNum + i][counterRepeat].lat,
+                      data[starterNum + i][counterRepeat].lng
+                    ], [data[starterNum + i][counterRepeat + 1].lat,
+                      data[starterNum + i][counterRepeat + 1].lng
+                    ]);
 
-              var polys = [];
-              for (var i = 0; i < arr.length; i++) {
+                  inArr.push(eachIn);
 
-                var subPolys = [];
-
-                arr[i].forEach(function(coords, index) {
-                  subPolys.push(project(coords).x);
-                  subPolys.push(project(coords).y);
-                });
-
-                polys.push(subPolys);
-
-
-              } //---end for
-
-              //console.log(polys);
-
-
-              for (var i = 0; i < polys.length; i++) {
-                if (use_sprites == false) {
-
-                  //buffer.lineStyle(0.15, hex(255, 255, 255), 0.0);
-                  buffer.drawPolygon(polys[i]);
-
+                  */
+                  stateArr.push(true);
+                } else {
+                  stateArr.push(false);
                 }
+
               }
 
-              //console.log('xx');
+
+              console.log(inArr);
 
 
 
 
-            } //---FINAL DRAW
+              this.onRepeat = function() {
+
+                counterRepeat++;
+
+                for (var i = totalRiders; i--;) {
 
 
-            //--METER PARTICLES!
+                  if (counterRepeat + 1 < data[starterNum + i].length) {
+                    stateArr[i] = true;
 
-            ////..........PARTICLES
-            /*
-            var numpart = 1;
-            var sprites = new PIXI.particles.ParticleContainer(numpart, {
-              scale: true,
-              position: true,
-              rotation: true,
-              uvs: true,
-              alpha: true
-            });
+                    /*
+                                        inArr[i] = d3.interpolateArray(
+                                          [data[starterNum + i][counterRepeat].lat,
+                                            data[starterNum + i][counterRepeat].lng
+                                          ], [data[starterNum + i][counterRepeat + 1].lat,
+                                            data[starterNum + i][counterRepeat + 1].lng
+                                          ]);
+                    */
 
-            container.addChild(sprites);
+                  } else {
 
-            var maggots = [];
-            var totalSprites = renderer instanceof PIXI.WebGLRenderer ? numpart : 1;
+                    stateArr[i] = false;
 
-            for (var i = 0; i < totalSprites; i++) {
-
-              var dude = new PIXI.Sprite(resources.circle.texture);
+                  }
 
 
-
-              var pos = [data[27 + i][0].lat, data[27 + i][0].lng];
-
-              dude.x = project(pos).x;
-              dude.y = project(pos).y;
-
-              dude.anchor.set(0.5);
-
-              dude.scale.set(1 * 0.01);
+                }
 
 
-              maggots.push(dude);
+
+              };
+              this.updateHandler = function(value) {
 
 
-              sprites.addChild(dude);
+                for (var i = totalRiders; i--;) {
+
+                  if (stateArr[i]) {
+                    //var pos = inArr[i](value * 0.1, value * 0.1);
+
+                    //console.log(pos)
+
+                    //ridersArr[i].transform.position.set(project(pos).x, project(pos).y);
+
+                    var pos = [data[starterNum + i][counterRepeat].lat,
+                      data[starterNum + i][counterRepeat].lng
+                    ];
+                    ridersArr[i].transform.position.set(project(pos).x, project(pos).y);
+
+                  }
+
+
+                }
+                renderer.render(container);
+
+
+              }
+            } //---RIDERS
+
+            var ridersGroup = new Riders();
+
+            function drawCity() {
+              var buffer = new PIXI.Graphics();
+              container.addChild(buffer);
+
+
+              drawPolyline(data);
+
+              function drawPolyline(arr) {
+
+
+                buffer.lineStyle(0.095, '0xFFFFFF', 0.2);
+                buffer.beginFill(0xFFFF0B, 0.0);
+
+
+                var polys = [];
+                for (var i = arr.length; i--;) {
+
+                  var subPolys = [];
+
+                  arr[i].forEach(function(coords, index) {
+                    subPolys.push(project(coords).x);
+                    subPolys.push(project(coords).y);
+                  });
+
+                  polys.push(subPolys);
+
+
+                } //---end for
+
+                for (var i = polys.length; i--;) {
+                  buffer.drawPolygon(polys[i]);
+                }
+
+              } //---FINAL DRAW POLYLINE
 
             }
-*/
-            //---------------
-
-
-            var markerSprite = new PIXI.Sprite(resources.circle.texture);
-
-            for (var i = 0; i < 1; i++) {
-              var pos = [data[27 + i][0].lat, data[27 + i][0].lng];
-
-              markerSprite.x = project(pos).x;
-              markerSprite.y = project(pos).y;
-              markerSprite.anchor.set(0.5);
-              markerSprite.scale.set(1 * 0.03);
-
-
-            }
-
-
-            // markerSprite.scale = 1000 * factorScale;
+            drawCity();
 
 
 
-            //markerSprite.on('pointerdown', onClick);
-
-            container.addChild(markerSprite);
-
-
-
-            var counter = 0;
-            var posCircle = { score: 0 };
             //---ANIMATION
             ticker.speed = 0.5;
-
             ticker.stop();
+            var oldDelta = 0;
+            var newDelta = 0;
 
-            var val = 1;
-            var loopLength = 10;
 
             ticker.add(function(deltaTime) {
               ////console.log(deltaTime);
-              if (val > loopLength) {
 
-                val = 1;
-                onRepeat();
+              if (ridersGroup.val > ridersGroup.loopLength) {
+
+                ridersGroup.val = 1;
+
 
 
               } else {
-                val += 1 * deltaTime;
+                ridersGroup.val += 1 * deltaTime;
 
               }
 
-              updateHandler(parseInt(val));
 
 
 
-              renderer.render(container);
+
+
+              oldDelta = newDelta;
+              newDelta = parseInt(ridersGroup.val);
+
+
+              if (oldDelta !== newDelta) {
+                //console.log('oldDelta: ' + oldDelta + ' newDelta: ' + newDelta)
+                //console.log(ridersGroup.val)
+
+                if (ridersGroup.val > ridersGroup.loopLength) {
+                  ridersGroup.onRepeat();
+                }
+                ridersGroup.updateHandler(newDelta);
+              }
+
+
+              //console.log('ticker')
+
+
+
             });
 
 
             ticker.start();
-
-
-
-
-
-
-            var counterRepeat = 0;
-
-
-            var i = d3.interpolateArray(
-              [data[27][counterRepeat].lat,
-                data[27][counterRepeat].lng
-              ], [data[27][counterRepeat + 1].lat,
-                data[27][counterRepeat + 1].lng
-              ]);
-
-
-            function onRepeat() {
-
-
-
-              counterRepeat++;
-              //console.log('counterRepeat: ' + counterRepeat)
-
-              i = d3.interpolateArray(
-                [data[27][counterRepeat].lat,
-                  data[27][counterRepeat].lng
-                ], [data[27][counterRepeat + 1].lat,
-                  data[27][counterRepeat + 1].lng
-                ]);
-
-
-
-            }
-
-
-
-
-
-            function updateHandler(value) {
-              //console.log(value);
-
-              var pos = i(value * 0.1, value * 0.1);
-              markerSprite.transform.position.set(project(pos).x, project(pos).y);
-
-              counter++;
-
-            }
-
-
 
           }
 
