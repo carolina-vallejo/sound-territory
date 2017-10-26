@@ -57,6 +57,9 @@
     .scale([blue, violet, pink, red, yellow, orange]).colors(10);
 
 
+
+
+
   $(function() {
 
 
@@ -87,7 +90,7 @@
 
         console.log(arrGeo)
 
-/*
+        /*
 
         var vlcByLarge = d3.nest()
           .key(function(d) { 
@@ -95,9 +98,9 @@
           })
           .sortKeys(d3.descending)
           .entries(arrGeo);
-console.log(vlcByLarge);
-*/
-          
+        console.log(vlcByLarge);
+        */
+
 
         pixiLayer(arrGeo);
 
@@ -123,6 +126,7 @@ console.log(vlcByLarge);
       .add('circle', 'circle-blue.png')
       .add('gusanito', 'gusanito.png')
       .add('line', 'line.gif')
+      .add('iris', 'iris2.png');
 
     var blurFilter1 = new PIXI.filters.BlurFilter();
 
@@ -155,42 +159,82 @@ console.log(vlcByLarge);
 
           if (firstDraw && prevZoom !== zoom) {
 
+            var raidersGroupContainer = new PIXI.DisplayObjectContainer();
+            var mapContainer = new PIXI.DisplayObjectContainer();
+
+
+            mapContainer.zIndex = 1;
+            raidersGroupContainer.zIndex = 100;
+
+
+            /* adding children, no matter in which order */
+            container.addChild(mapContainer);
+            container.addChild(raidersGroupContainer);
+
+            var buffer = new PIXI.Graphics();
+
+            //-----------
+            var numpart = data.length;
+            var ridersParticles = new PIXI.particles.ParticleContainer(numpart);
+            //var ridersParticles = new PIXI.Container();
+
+            container.addChild(ridersParticles);
+
+
+            container.addChild(buffer);
+
 
             function Riders() {
 
-              var starterNum = 9000;
+              var starterNum = 0;
 
               this.val = 1;
               this.loopLength = 5;
 
-              var markerSprite = new PIXI.Sprite(resources.circle.texture);
               var counterRepeat = 0;
 
-              //-----------
-              var numpart = 1000;
-              var ridersParticles = new PIXI.particles.ParticleContainer(numpart, {
-                scale: true,
-                position: true,
-                rotation: true,
-                uvs: true,
-                alpha: true
-              });
-              container.addChild(ridersParticles);
+
+              var max = d3.max(data, function(d) {
+                //console.log(d);
+                return d.length;
+              })
+
+              console.log(max);
+
+
+              var scale = d3.scaleLog()
+                .domain([1, max])
+                .range([0, 14]);
+
+              console.log(scale(370))
+
 
               var ridersArr = [];
-              var totalRiders = renderer instanceof PIXI.WebGLRenderer ? numpart : 1;
+              var totalRiders = renderer instanceof PIXI.WebGLRenderer ? numpart : 100;
               var inArr = [];
               var stateArr = [];
 
+              var unit = 17;
+
               for (var i = totalRiders; i--;) {
-                var rider = new PIXI.Sprite(resources.circle.texture);
+
+
+
+                //console.log( parseInt(scale(data[i].length)) + '  scale: ' + data[i].length );
+
+                var texture = new PIXI.Texture(resources.iris.texture);
+                var rect1 = new PIXI.Rectangle((17 * parseInt(getRnd(18,0))), unit, unit, 16);
+                texture.frame = rect1;
+
+                var rider = new PIXI.Sprite(texture);
                 var pos = [data[starterNum + i][0].lat, data[starterNum + i][0].lng];
 
                 rider.x = project(pos).x;
                 rider.y = project(pos).y;
 
+
                 rider.anchor.set(0.5);
-                rider.scale.set(1 * 0.02);
+                rider.scale.set(1 * 0.028);
                 ridersArr.push(rider);
 
 
@@ -284,8 +328,6 @@ console.log(vlcByLarge);
             var ridersGroup = new Riders();
 
             function drawCity() {
-              var buffer = new PIXI.Graphics();
-              container.addChild(buffer);
 
 
               drawPolyline(data);
@@ -293,8 +335,9 @@ console.log(vlcByLarge);
               function drawPolyline(arr) {
 
 
-                buffer.lineStyle(0.095, '0xFFFFFF', 0.2);
+                buffer.lineStyle(0.095, '0x000000', 0.3);
                 buffer.beginFill(0xFFFF0B, 0.0);
+                buffer.blendMode = PIXI.blendModes.SCREEN;
 
 
                 var polys = [];
@@ -320,6 +363,7 @@ console.log(vlcByLarge);
 
             }
             drawCity();
+
 
 
 
@@ -429,6 +473,12 @@ console.log(vlcByLarge);
 
 
   } //----PIXILAYER
+
+
+  function getRnd(max, min) {
+    return Math.random() * (max - min) + min;
+  }
+
   function extendTopoJson() {
     L.TopoJSON = L.GeoJSON.extend({
       addData: function(jsonData) {

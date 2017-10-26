@@ -125,3 +125,8 @@ $w-border-interactive: 6px;
   height: $h-drag-ranger;
   background-color: $fondoTimeline;
 }
+
+canvas{
+  //background: white;
+  background: hsla(49, 14%, 89%, 1);
+}
