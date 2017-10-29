@@ -1,4 +1,4 @@
-# relacion-territorio
+# sound-territory
 Map visualisation experiments with Pixi.js (WebGL), Leaflet and D3.
 
 The experiments consist in:
