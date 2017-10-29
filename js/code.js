@@ -2,115 +2,45 @@
 
   extendTopoJson();
 
-  /**/
+  var vlc = [39.475339, -0.376703];
+  var kyoto = [34.980603, 135.761296];
+  var bogota = [4.608943, -74.070867];
+
   var leafletMap = L.map('mapid', {
       minZoom: 1,
       maxZoom: 20
     })
-    .setView([39.475339, -0.376703])
+    .setView(vlc)
     .setZoom(13);
 
 
-  var polygonLatLngs = [
-    [51.509, -0.08],
-    [51.503, -0.06],
-    [51.51, -0.047],
-    [51.509, -0.08]
-  ];
-
-  var coords, arrCoords = [];
-
-
-
-  var pixiContainer = new PIXI.Container();
-
-
-
-  const ticker = new PIXI.ticker.Ticker();
-  ticker.speed = 0.25;
-
-  var width = window.innerWidth,
-    height = window.innerHeight,
-    active = d3.select(null);
-
-  var firstDraw = true;
-  var prevZoom;
-
-  var frame = null;
-  var count = 0;
-
-  var animation, factorScale, renderer, container;
-
-  var dataCoordsPixi;
-
-
-  var white = '#FFFFFF';
-  var blue = '#60c1dc';
-  var pink = '#e68fc3';
-  var orange = '#f7cd83';
-  var green = '#55e851';
-  var violet = '#a651e8';
-  var red = '#e85151';
-  var yellow = '#f7e883';
-
-  var colors = chroma
-    .scale([blue, violet, pink, red, yellow, orange]).colors(10);
-
-
-
-
+  var pixiContainer = new PIXI.Container(),
+    ticker = new PIXI.ticker.Ticker(),
+    firstDraw = true,
+    prevZoom,
+    frame = null,
+    animation,
+    factorScale,
+    renderer,
+    container;
+  ticker.speed = 0.5;
 
   $(function() {
 
-
-
-    //////////////////////////TOPOJSON
-    var topoLayer = new L.GeoJSON();
-    var topoLayer2 = new L.TopoJSON();
-
-
-    d3.json('data/countries-coords.json', function(error, mydata) {
+    d3.json('maps/vlc-map.json', function(error, datacoords) {
       if (error) throw error;
 
-      //console.log(mydata);
+      var topolayer = new L.TopoJSON();
+      topolayer.addData(datacoords);
 
-      //---OJO VER SI EL GEOJSON TIENE FEATURES
+      var arrGeo = [];
+      for (var keys in topolayer._layers) {
+        arrGeo.push(topolayer._layers[keys]._latlngs);
+      }
 
-      d3.json('map/vlc-streets.json', function(error, datacoords) {
-        if (error) throw error;
+      pixiLayer(arrGeo);
 
-        //console.log(datacoords);
-
-        topoLayer2.addData(datacoords);
-
-        var arrGeo = [];
-        for (var keys in topoLayer2._layers) {
-          arrGeo.push(topoLayer2._layers[keys]._latlngs);
-        }
-
-        console.log(arrGeo)
-
-        /*
-
-        var vlcByLarge = d3.nest()
-          .key(function(d) { 
-            return parseInt(d.length); 
-          })
-          .sortKeys(d3.descending)
-          .entries(arrGeo);
-        console.log(vlcByLarge);
-        */
-
-
-        pixiLayer(arrGeo);
-
-
-      }); //---GET DATA
-
-
-
-
-    }); //---GET POLYGONS
+    }); //---GET DATA
 
   }); ///--- ON READY
 
@@ -118,21 +48,10 @@
 
   function pixiLayer(data) {
 
-
-
-    //----
     var loader = new PIXI.loaders.Loader();
-    loader
-      .add('circle', 'circle-blue.png')
-      .add('gusanito', 'gusanito.png')
-      .add('line', 'line.gif')
-      .add('iris', 'iris2.png');
-
-    var blurFilter1 = new PIXI.filters.BlurFilter();
+    loader.add('iris', 'assets/iris.png');
 
     loader.load(function(loader, resources) {
-
-      //////console.log(resources.circle.texture);
 
       var pixiOverlay = L.pixiOverlay(function(utils) {
 
@@ -142,49 +61,20 @@
           var project = utils.latLngToLayerPoint;
           var scale = utils.getScale();
 
-
-
           if (frame) {
             frame = null;
           }
 
-          //------
-          factorScale = ((1 - scale) * 100);
-
-
-          if (firstDraw) {
-
-          }
-
+          if (firstDraw) {}
 
           if (firstDraw && prevZoom !== zoom) {
 
-            var raidersGroupContainer = new PIXI.DisplayObjectContainer();
-            var mapContainer = new PIXI.DisplayObjectContainer();
-
-
-            mapContainer.zIndex = 1;
-            raidersGroupContainer.zIndex = 100;
-
-
-            /* adding children, no matter in which order */
-            container.addChild(mapContainer);
-            container.addChild(raidersGroupContainer);
-
-            var buffer = new PIXI.Graphics();
-
-            //-----------
-            var numpart = data.length;
-            var ridersParticles = new PIXI.particles.ParticleContainer(numpart);
-            //var ridersParticles = new PIXI.Container();
-
-            container.addChild(ridersParticles);
-
-
-            container.addChild(buffer);
-
-
             function Riders() {
+
+              var numpart = data.length;
+              //var numpart = 10;
+              var ridersParticles = new PIXI.particles.ParticleContainer(numpart);
+              container.addChild(ridersParticles);
 
               var starterNum = 0;
 
@@ -193,67 +83,43 @@
 
               var counterRepeat = 0;
 
-
               var max = d3.max(data, function(d) {
-                //console.log(d);
                 return d.length;
-              })
-
-              console.log(max);
-
-
-              var scale = d3.scaleLog()
-                .domain([1, max])
-                .range([0, 14]);
-
-              console.log(scale(370))
-
+              });
 
               var ridersArr = [];
-              var totalRiders = renderer instanceof PIXI.WebGLRenderer ? numpart : 100;
+              var totalRiders = renderer instanceof PIXI.WebGLRenderer ? numpart : 1;
               var inArr = [];
               var stateArr = [];
 
-              var unit = 17;
+              var wUnit = 17;
+              var hUnit = 18;
+              var indexStart = 1;
+              var indexEnd = 24;
+
+              
 
               for (var i = totalRiders; i--;) {
 
-
-
-                //console.log( parseInt(scale(data[i].length)) + '  scale: ' + data[i].length );
-
                 var texture = new PIXI.Texture(resources.iris.texture);
-                var rect1 = new PIXI.Rectangle((17 * parseInt(getRnd(18,0))), unit, unit, 16);
+                var rect1 = new PIXI.Rectangle(wUnit * (parseInt(getRnd(indexEnd, indexStart))), 0, wUnit, hUnit);
                 texture.frame = rect1;
 
                 var rider = new PIXI.Sprite(texture);
+
                 var pos = [data[starterNum + i][0].lat, data[starterNum + i][0].lng];
-
-                rider.x = project(pos).x;
-                rider.y = project(pos).y;
-
 
                 rider.anchor.set(0.5);
                 rider.scale.set(1 * 0.028);
+                rider.transform.position.set(project(pos).x, project(pos).y);
+
+                //-----RIDRES ARRAYS 
                 ridersArr.push(rider);
-
-
                 ridersParticles.addChild(rider);
 
 
+
                 if (counterRepeat + 1 < data[starterNum + i].length) {
-
-                  /*
-                  var eachIn = d3.interpolateArray(
-                    [data[starterNum + i][counterRepeat].lat,
-                      data[starterNum + i][counterRepeat].lng
-                    ], [data[starterNum + i][counterRepeat + 1].lat,
-                      data[starterNum + i][counterRepeat + 1].lng
-                    ]);
-
-                  inArr.push(eachIn);
-
-                  */
                   stateArr.push(true);
                 } else {
                   stateArr.push(false);
@@ -261,42 +127,18 @@
 
               }
 
-
-              console.log(inArr);
-
-
-
-
               this.onRepeat = function() {
 
                 counterRepeat++;
 
                 for (var i = totalRiders; i--;) {
-
-
                   if (counterRepeat + 1 < data[starterNum + i].length) {
                     stateArr[i] = true;
 
-                    /*
-                                        inArr[i] = d3.interpolateArray(
-                                          [data[starterNum + i][counterRepeat].lat,
-                                            data[starterNum + i][counterRepeat].lng
-                                          ], [data[starterNum + i][counterRepeat + 1].lat,
-                                            data[starterNum + i][counterRepeat + 1].lng
-                                          ]);
-                    */
-
                   } else {
-
                     stateArr[i] = false;
-
                   }
-
-
                 }
-
-
-
               };
               this.updateHandler = function(value) {
 
@@ -304,11 +146,6 @@
                 for (var i = totalRiders; i--;) {
 
                   if (stateArr[i]) {
-                    //var pos = inArr[i](value * 0.1, value * 0.1);
-
-                    //console.log(pos)
-
-                    //ridersArr[i].transform.position.set(project(pos).x, project(pos).y);
 
                     var pos = [data[starterNum + i][counterRepeat].lat,
                       data[starterNum + i][counterRepeat].lng
@@ -329,6 +166,8 @@
 
             function drawCity() {
 
+              var buffer = new PIXI.Graphics();
+              container.addChild(buffer);
 
               drawPolyline(data);
 
@@ -369,74 +208,42 @@
 
             //---ANIMATION
             ticker.speed = 0.5;
-            ticker.stop();
             var oldDelta = 0;
             var newDelta = 0;
 
 
             ticker.add(function(deltaTime) {
-              ////console.log(deltaTime);
 
               if (ridersGroup.val > ridersGroup.loopLength) {
-
                 ridersGroup.val = 1;
-
-
-
               } else {
                 ridersGroup.val += 1 * deltaTime;
-
               }
-
-
-
-
-
 
               oldDelta = newDelta;
               newDelta = parseInt(ridersGroup.val);
 
-
               if (oldDelta !== newDelta) {
-                //console.log('oldDelta: ' + oldDelta + ' newDelta: ' + newDelta)
-                //console.log(ridersGroup.val)
 
                 if (ridersGroup.val > ridersGroup.loopLength) {
                   ridersGroup.onRepeat();
                 }
                 ridersGroup.updateHandler(newDelta);
+
               }
 
-
-              //console.log('ticker')
-
-
-
             });
-
-
-            ticker.start();
 
           }
 
 
 
           if (!firstDraw && prevZoom !== zoom) {
-
-            ////console.log('zzzz');
             //console.log(zoom);
           }
           firstDraw = false;
           prevZoom = zoom;
           renderer.render(container);
-
-          if (renderer instanceof PIXI.CanvasRenderer) {
-            ////console.log('//canvas renderer');
-
-          } else {
-            //webgl renderer
-            ////console.log('//canvas webgl');
-          }
 
 
         },
@@ -453,7 +260,6 @@
 
     //---STOP BUTTON
     $('#stop-animation').on('click', function() {
-      //cancelAnimationFrame(animation);
       $(this).hide();
       $('#play-animation').show();
       ticker.stop();
@@ -461,7 +267,6 @@
     });
 
     $('#play-animation').on('click', function() {
-      //requestAnimationFrame(animate);
       $(this).hide();
       $('#stop-animation').show();
       ticker.start();
@@ -496,7 +301,7 @@
   }
 
 
-  function disableInteraction(map, idmap) {
+  function disableMapInteraction(map, idmap) {
 
     map.dragging.disable();
     map.touchZoom.disable();
@@ -506,20 +311,6 @@
     map.keyboard.disable();
     if (map.tap) map.tap.disable();
     document.getElementById(idmap).style.cursor = 'default';
-  }
-
-
-  function animate() {
-
-    graphics.clear();
-
-    count += 1;
-    graphics.lineStyle(0);
-    graphics.beginFill(0xFFFFFF, 1);
-    graphics.drawRect(coords.x + (count * factorScale), coords.y, 100 * factorScale, 100 * factorScale);
-    graphics.endFill();
-    renderer.render(container);
-    animation = requestAnimationFrame(animate);
   }
 
   function drawTilesMap(map) {
@@ -540,3 +331,16 @@
   }
 
 }(window.jQuery, window, document));
+
+
+/*---------
+
+geo2topo countries=bogota.geojson > bogota-map.json
+
+var inter = d3.interpolateArray([x,y],[x,y])
+var pos = inArr[i](deltaTime * 0.1, deltaTime * 0.1);
+
+ridersArr[i].transform.position.set(project(pos).x, project(pos).y);
+
+
+----------------*/
