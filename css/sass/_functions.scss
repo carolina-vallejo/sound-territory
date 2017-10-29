@@ -14,7 +14,7 @@
     @content;
   }
 }
-@mixin clear {
+@mixin clean {
   &::after,
   &::before {
     content: "";

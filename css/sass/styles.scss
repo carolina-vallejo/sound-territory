@@ -2,11 +2,10 @@
 //@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700');
 //-----VARIABLES
 $family:'Roboto Condensed';
-$background:#181b21;
+$background: #e7e5df;
 $stroke:#007ba8;
 $fondoTimeline:#25282d;
-$stroke-border:rgba($stroke,
-1);
+$stroke-border:rgba($stroke, 1);
 
 /*--GENERALS-*/
 
@@ -14,6 +13,32 @@ body {
   padding: 0;
   margin: 0;
   overflow: hidden;
+}
+
+.btn-input {
+  display: block;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  text-shadow: none;
+  box-shadow: none;
+  padding: 5px;
+  margin: 5px;
+  border-radius: 0;
+  background: rgba($background,0.8);
+  border: 1px solid rgba(black,0.7);
+  color: rgba(black,0.7);
+  cursor: pointer;
+  font-size: 14px;
+  float: right;
+  &:hover{
+    color: $background;
+    background: rgba(black, 0.6);
+  }
+}
+
+.btn-input:focus,
+.btn-input:enabled {
+  outline: 0;
 }
 
 #mapid {
@@ -44,7 +69,8 @@ path {
   position: absolute;
   z-index: 1;
   top: 0;
-  left: 100px;
+  right: 20px;
+  @include clean;
 }
 
 #pixicanvas {
@@ -68,7 +94,6 @@ path {
 $h-drag-ranger:120px;
 $w-border-interactive: 6px;
 .resize-drag {
-  
   color: white;
   font-size: 20px;
   font-family: sans-serif;
@@ -86,7 +111,7 @@ $w-border-interactive: 6px;
     display: block;
     width: calc(100% - #{$w-border-interactive});
     height: 100%;
-    top:0;
+    top: 0;
     left: $w-border-interactive/2;
     background-color: rgba(white, 0.1);
   }
@@ -126,7 +151,7 @@ $w-border-interactive: 6px;
   background-color: $fondoTimeline;
 }
 
-canvas{
+canvas {
   //background: white;
-  background: hsla(49, 14%, 89%, 1);
+  background: $background;
 }
