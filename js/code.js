@@ -8,14 +8,24 @@
 
   var leafletMap = L.map('mapid', {
       minZoom: 1,
-      maxZoom: 20
+      maxZoom: 20,
     })
     .setView(vlc)
-    .setZoom(13);
+    .setZoom(13)
+    .on('zoomend', function(e) {
+      var latlng = L.latLng(vlc[0], vlc[1]);
+      var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
 
+      for (var i = arrRandom.length; i--;) {
+        updatesvg([arrRandom[i][0].lat, arrRandom[i][0].lng]);
+      }
+    });
+
+  //--create svg layer
+  var myRenderer = L.svg({ padding: 0 });
+  myRenderer.addTo(leafletMap);
 
   var pixiContainer = new PIXI.Container(),
-    ticker = new PIXI.ticker.Ticker(),
     firstDraw = true,
     prevZoom,
     frame = null,
@@ -23,30 +33,154 @@
     factorScale,
     renderer,
     container;
-  ticker.speed = 0.5;
+
+  const ticker = new PIXI.ticker.Ticker();;
+
+  var routeArr = [];
+  //--ARR FOR DRAW CITY
+  var arrGeo = [];
+  var arrRandom = [];
+
+  var barras;
 
   $(function() {
 
     d3.json('maps/vlc-map.json', function(error, datacoords) {
       if (error) throw error;
 
-      var topolayer = new L.TopoJSON();
-      topolayer.addData(datacoords);
 
-      var arrGeo = [];
-      for (var keys in topolayer._layers) {
-        arrGeo.push(topolayer._layers[keys]._latlngs);
-      }
+      barras = d3.select('svg')
+        .append('g')
+        .attrs({
+          id: 'barras'
+        });
 
-      pixiLayer(arrGeo);
 
-    }); //---GET DATA
+      //crear random de coords unas 40 y guardarlas local, conectar recorridos
+      var url_ = 'data.php?coordinates=-0.323168,39.465528|-0.368039,39.478622';
+      var url = 'data/route2.json';
 
+      d3.json(url, function(error, dataroute) {
+        if (error) throw error;
+
+
+        var topolayer = new L.TopoJSON();
+        topolayer.addData(datacoords);
+
+
+
+        for (var keys in topolayer._layers) {
+          arrGeo.push(topolayer._layers[keys]._latlngs);
+          parseInt(getRnd(1, 500)) === 1 && arrRandom.push(topolayer._layers[keys]._latlngs);
+        }
+
+        //--ARR FOR ROUTES
+        var arrGeoRoute = [];
+
+        for (var i = dataroute.routes[0].geometry.coordinates.length; i--;) {
+
+          arrGeoRoute.push({
+            lat: dataroute.routes[0].geometry.coordinates[i][1],
+            lng: dataroute.routes[0].geometry.coordinates[i][0]
+          });
+        }
+
+        pixiLayer(arrGeo, [arrGeoRoute]);
+
+        console.log(arrRandom);
+
+
+
+      }); //---GET DATA
+    }); //---ROUTE
   }); ///--- ON READY
 
+  //----MARKERS
+  var icon_w = 12;
+  var wPop = 260;
+  var popOtions = {
+    closeOnClick: false,
+    autoClose: false,
+    offset: new L.Point(wPop / 2, icon_w + 10),
+    minWidth: wPop,
+    maxWidth: wPop,
+    keepInView: false
+  };
+  var localIcon = L.Icon.extend({
+    options: {
+      iconSize: [icon_w, icon_w],
+      iconAnchor: [(icon_w / 2), (icon_w)],
+      popupAnchor: [0, 0]
+    }
+  });
+
+  markerIcon = new localIcon({ iconUrl: 'assets/marker.svg' });
+  var markers = L.layerGroup();
+  leafletMap.addLayer(markers);
 
 
-  function pixiLayer(data) {
+  var strTrans_ = 'rotateX(53deg) rotateZ(-25deg)';
+  var strTrans = 'rotateX(49deg) rotateZ(-32deg) skewY(23deg) skewX(-17deg)';
+  var strUnTrans = 'skewX(17deg) skewY(-23deg) rotateZ(32deg) rotateX(-49deg)';
+
+  function updatesvg(dataMarker) {
+
+
+    for (var i = arrRandom.length; i--;) {
+      var latlng = L.latLng(arrRandom[i][0].lat, arrRandom[i][0].lng);
+
+      var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
+      d3.select('#barra-' + i)
+        .styles({
+          'transform': 'translate3d(' + pointlatlng.x + 'px, ' + pointlatlng.y + 'px, 0px) ' + strUnTrans
+
+        });
+
+    }
+
+
+
+  }
+  var counterBarras = 0;
+
+  function markerConstructor(dataMarker) {
+
+    var latlng = L.latLng(dataMarker[0], dataMarker[1]);
+    var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
+
+
+
+    var h = getRnd(10, 200);
+    $('#mapcontainer')
+      .css({
+        'transform': strTrans
+
+
+      });
+
+    counterBarras++;
+
+    barras
+      .append('rect')
+      .attrs({
+        'id': 'barra-' + counterBarras,
+        'r': 10,
+        'x': 0,
+        'y': -h,
+        'width': 2,
+        'height': h
+      })
+      .styles({
+        'fill': 'red',
+        'fill-opacity': 1,
+        'transform': 'translate(' + pointlatlng.x + 'px, ' + pointlatlng.y + 'px) ' + strUnTrans
+
+      });
+
+
+  }
+
+  function pixiLayer(data, routeData) {
 
     var loader = new PIXI.loaders.Loader();
     loader.add('iris', 'assets/iris.png');
@@ -69,11 +203,17 @@
 
           if (firstDraw && prevZoom !== zoom) {
 
-            function Riders() {
+            for (var i = arrRandom.length; i--;) {
+
+              markerConstructor([arrRandom[i][0].lat, arrRandom[i][0].lng]);
+            }
+
+            function Riders(data) {
 
               var numpart = data.length;
-              //var numpart = 10;
+              // var numpart = 10;
               var ridersParticles = new PIXI.particles.ParticleContainer(numpart);
+              //var ridersParticles = new PIXI.Container();
               container.addChild(ridersParticles);
 
               var starterNum = 0;
@@ -94,10 +234,8 @@
 
               var wUnit = 17;
               var hUnit = 18;
-              var indexStart = 1;
-              var indexEnd = 24;
-
-              
+              var indexStart = 14;
+              var indexEnd = 18;
 
               for (var i = totalRiders; i--;) {
 
@@ -110,7 +248,7 @@
                 var pos = [data[starterNum + i][0].lat, data[starterNum + i][0].lng];
 
                 rider.anchor.set(0.5);
-                rider.scale.set(1 * 0.028);
+                rider.scale.set(1 * 0.06);
                 rider.transform.position.set(project(pos).x, project(pos).y);
 
                 //-----RIDRES ARRAYS 
@@ -162,7 +300,7 @@
               }
             } //---RIDERS
 
-            var ridersGroup = new Riders();
+            var ridersGroup = new Riders(routeData);
 
             function drawCity() {
 
@@ -176,7 +314,7 @@
 
                 buffer.lineStyle(0.095, '0x000000', 0.3);
                 buffer.beginFill(0xFFFF0B, 0.0);
-                buffer.blendMode = PIXI.blendModes.SCREEN;
+                buffer.blendMode = PIXI.BLEND_MODES.SCREEN;
 
 
                 var polys = [];
@@ -198,21 +336,24 @@
                   buffer.drawPolygon(polys[i]);
                 }
 
+                $('.spinner').addClass('stop');
+
               } //---FINAL DRAW POLYLINE
 
             }
             drawCity();
 
 
-
-
             //---ANIMATION
+
+
             ticker.speed = 0.5;
             var oldDelta = 0;
             var newDelta = 0;
 
+            ticker.stop();
 
-            ticker.add(function(deltaTime) {
+            ticker.add((deltaTime) => {
 
               if (ridersGroup.val > ridersGroup.loopLength) {
                 ridersGroup.val = 1;
@@ -231,9 +372,14 @@
                 ridersGroup.updateHandler(newDelta);
 
               }
-
             });
+            ticker.start();
             ticker.stop();
+
+
+
+
+
 
           }
 
@@ -317,7 +463,7 @@
   function drawTilesMap(map) {
     var mapLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}' + '' + '?access_token=pk.eyJ1IjoiY2Fyb2xpbmF2YWxsZWpvIiwiYSI6ImNqNGZuendsZDFmbmwycXA0eGFpejA5azUifQ._a5sIBQuS72Kw24eZgrEFw', {
       attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-      maxZoom: 15,
+      maxZoom: 20,
       id: 'mapbox.streets',
       accessToken: 'pk.eyJ1IjoiY2Fyb2xpbmF2YWxsZWpvIiwiYSI6ImNqNGZuendsZDFmbmwycXA0eGFpejA5azUifQ._a5sIBQuS72Kw24eZgrEFw'
     }).addTo(map);
@@ -335,6 +481,12 @@
 
 
 /*---------
+
+TO_DO:
+ - stop ticker cuando ya no hay mas animations
+
+//---------
+
 
 geo2topo countries=bogota.geojson > bogota-map.json
 

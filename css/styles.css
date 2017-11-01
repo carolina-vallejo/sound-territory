@@ -2,7 +2,8 @@
 body {
   padding: 0;
   margin: 0;
-  overflow: hidden; }
+  overflow: hidden;
+  background: #e7e5df; }
 
 .btn-input {
   display: block;
@@ -10,7 +11,7 @@ body {
   -moz-appearance: none;
   text-shadow: none;
   box-shadow: none;
-  padding: 5px;
+  padding: 5px 15px;
   margin: 5px;
   border-radius: 0;
   background: rgba(231, 229, 223, 0.8);
@@ -43,9 +44,9 @@ path {
   background: #e7e5df; }
 
 .leaflet-tile-pane {
-  opacity: 0.2;
-  filter: grayscale(100%);
-  -webkit-filter: grayscale(100%); }
+  opacity: 1;
+  filter: grayscale(0%);
+  -webkit-filter: grayscale(0%); }
 
 .controls {
   position: absolute;
@@ -65,7 +66,7 @@ path {
   left: 0; }
 
 .leaflet-map-pane svg {
-  z-index: auto; }
+  z-index: 1; }
 
 #slider {
   position: fixed;
@@ -124,6 +125,64 @@ path {
   background-color: #25282d; }
 
 canvas {
-  background: #e7e5df; }
+  background: transparent; }
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  -webkit-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  transition: opacity 500ms ease; }
+  .spinner.stop {
+    opacity: 0;
+    pointer-events: none; }
+    .spinner.stop .double-bounce1,
+    .spinner.stop .double-bounce2 {
+      -webkit-animation: none;
+      animation: none; }
+
+.double-bounce1 {
+  background-color: #60dfd7; }
+
+.double-bounce2 {
+  background-color: #df60cc; }
+
+.double-bounce1,
+.double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+  animation: sk-bounce 2.0s infinite ease-in-out; }
+
+.double-bounce2 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s; }
+
+@-webkit-keyframes sk-bounce {
+  0%,
+  100% {
+    -webkit-transform: scale(0); }
+  50% {
+    -webkit-transform: scale(1); } }
+@keyframes sk-bounce {
+  0%,
+  100% {
+    transform: scale(0);
+    -webkit-transform: scale(0); }
+  50% {
+    transform: scale(1);
+    -webkit-transform: scale(1); } }
 
 /*# sourceMappingURL=styles.css.map */
