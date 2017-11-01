@@ -153,10 +153,18 @@
     var h = getRnd(10, 200);
     $('#mapcontainer')
       .css({
-        'transform': strTrans
+        'transform' : 'matrix3d(0.437662, -0.016154, 0, -9.3e-05, -0.243355, -0.071613, 0, -0.001365, 0, 0, 1, 0, 81, 173, 0, 1) matrix3d(2.2465e+00, 8.8749e-04, -0.0000e+00, 2.1013e-04, 1.8131e+00, 6.0786e+00, -0.0000e+00, 8.4659e-03, 0.0000e+00, 0.0000e+00, 1.0000e+00, 0.0000e+00, -4.9563e+02, -1.0517e+03, 0.0000e+00, -4.8161e-01)'
 
 
-      });
+
+      })
+      .children()
+      .css({
+
+           
+    
+      })
+
 
     counterBarras++;
 
@@ -165,17 +173,15 @@
       .attrs({
         'id': 'barra-' + counterBarras,
         'r': 10,
-        'x': 0,
-        'y': -h,
+        'x': pointlatlng.x,
+        'y': pointlatlng.y - h,
         'width': 2,
         'height': h
       })
       .styles({
         'fill': 'red',
         'fill-opacity': 1,
-        'transform': 'translate(' + pointlatlng.x + 'px, ' + pointlatlng.y + 'px) ' + strUnTrans
-
-      });
+     });
 
 
   }
