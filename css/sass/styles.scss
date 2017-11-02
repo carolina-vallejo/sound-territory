@@ -9,6 +9,11 @@ $stroke-border:rgba($stroke, 1);
 
 /*--GENERALS-*/
 
+#mapcontainer * {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
 body {
   padding: 0;
   margin: 0;
@@ -50,9 +55,10 @@ body {
   z-index: 0;
 }
 
-.leaflet-marker-icon{
+.leaflet-marker-icon {
   //@include transform( translate3d(514px, 341px, 0px) scale(1, 1) skewX(30deg) rotateZ(-30deg)!important);
 }
+
 path {
   stroke: $stroke;
   stroke-width: 1px;

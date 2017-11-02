@@ -6,19 +6,21 @@
   var kyoto = [34.980603, 135.761296];
   var bogota = [4.608943, -74.070867];
 
+  var initZoom = 13;
+
   var leafletMap = L.map('mapid', {
       minZoom: 1,
       maxZoom: 20,
     })
     .setView(vlc)
-    .setZoom(13)
+    .setZoom(initZoom)
     .on('zoomend', function(e) {
       var latlng = L.latLng(vlc[0], vlc[1]);
       var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
 
-      for (var i = arrRandom.length; i--;) {
-        updatesvg([arrRandom[i][0].lat, arrRandom[i][0].lng]);
-      }
+
+      updatesvg();
+
     });
 
   //--create svg layer
@@ -41,7 +43,7 @@
   var arrGeo = [];
   var arrRandom = [];
 
-  var barras;
+  var markersContainer;
 
   $(function() {
 
@@ -49,11 +51,13 @@
       if (error) throw error;
 
 
-      barras = d3.select('svg')
-        .append('g')
-        .attrs({
-          id: 'barras'
-        });
+
+
+
+
+
+
+
 
 
       //crear random de coords unas 40 y guardarlas local, conectar recorridos
@@ -119,22 +123,35 @@
   leafletMap.addLayer(markers);
 
 
-  var strTrans_ = 'rotateX(53deg) rotateZ(-25deg)';
-  var strTrans = 'rotateX(49deg) rotateZ(-32deg) skewY(23deg) skewX(-17deg)';
-  var strUnTrans = 'skewX(17deg) skewY(-23deg) rotateZ(32deg) rotateX(-49deg)';
+  var strTrans = 'rotateX(53deg) rotateZ(-25deg)';
 
-  function updatesvg(dataMarker) {
+
+  function updatesvg() {
 
 
     for (var i = arrRandom.length; i--;) {
       var latlng = L.latLng(arrRandom[i][0].lat, arrRandom[i][0].lng);
 
+      var factor = leafletMap.getZoom() - initZoom !== 0 ?
+        (leafletMap.getZoom() > initZoom ?
+          (leafletMap.getZoom() - initZoom) + 1 : 1
+        ) : 1;
+
+      console.log(leafletMap.getZoom() + ' initZoom ' + initZoom);
+      console.log('factor: ' + factor);
+
       var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
       d3.select('#barra-' + i)
-        .styles({
-          'transform': 'translate3d(' + pointlatlng.x + 'px, ' + pointlatlng.y + 'px, 0px) ' + strUnTrans
+        .attrs({
+          'class': 'barra-' + i,
+          'x': pointlatlng.x,
+          'y': pointlatlng.y - (100 * factor),
+          'width': 2 * factor,
+          'height': 100 * factor
 
-        });
+
+        })
+        .classed('child', true)
 
     }
 
@@ -143,45 +160,40 @@
   }
   var counterBarras = 0;
 
+
+
+
+
+
   function markerConstructor(dataMarker) {
 
     var latlng = L.latLng(dataMarker[0], dataMarker[1]);
     var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
 
+    var m = new L.Marker(latlng, { icon: markerIcon });
+    markers.addLayer(m);
 
 
-    var h = getRnd(10, 200);
-    $('#mapcontainer')
-      .css({
-        'transform' : 'matrix3d(0.437662, -0.016154, 0, -9.3e-05, -0.243355, -0.071613, 0, -0.001365, 0, 0, 1, 0, 81, 173, 0, 1) matrix3d(2.2465e+00, 8.8749e-04, -0.0000e+00, 2.1013e-04, 1.8131e+00, 6.0786e+00, -0.0000e+00, 8.4659e-03, 0.0000e+00, 0.0000e+00, 1.0000e+00, 0.0000e+00, -4.9563e+02, -1.0517e+03, 0.0000e+00, -4.8161e-01)'
+    var h_ = getRnd(10, 200);
+    var h = 100;
 
 
-
+    markersContainer
+      .append('div')
+      .styles({
+        'margin-left': '-1px',
+        'margin-top': '-120px',
+        'width': '1px',
+        'height': '120px',
+        'background': 'red',
+        'transform': 'translate3d(' + pointlatlng.x + 'px,' + pointlatlng.y + 'px, 0px) rotateX(-60deg)',
+        'transform-origin': 'center bottom'
       })
-      .children()
-      .css({
 
-           
-    
-      })
+
 
 
     counterBarras++;
-
-    barras
-      .append('rect')
-      .attrs({
-        'id': 'barra-' + counterBarras,
-        'r': 10,
-        'x': pointlatlng.x,
-        'y': pointlatlng.y - h,
-        'width': 2,
-        'height': h
-      })
-      .styles({
-        'fill': 'red',
-        'fill-opacity': 1,
-     });
 
 
   }
@@ -208,6 +220,44 @@
           if (firstDraw) {}
 
           if (firstDraw && prevZoom !== zoom) {
+
+
+            d3.select('.leaflet-overlay-pane')
+              .styles({
+                'perspective': '500px',
+                '-moz-perspective': '500px',
+                '-webkit-perspective': '500px'
+              });
+
+            markersContainer = d3.select('.leaflet-pixi-overlay')
+              .append('div')
+              .attrs({
+                class: 'markersContainer',
+              })
+              .styles({
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: 'rotateX(60deg)'
+              });
+
+            $('canvas').after($('.leaflet-marker-pane'));
+
+            d3.select('.leaflet-marker-pane')
+              .styles({
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: 'rotateX(60deg)'
+              });
+            d3.select('canvas')
+              .styles({
+                transform: 'rotateX(60deg)'
+              });
 
             for (var i = arrRandom.length; i--;) {
 

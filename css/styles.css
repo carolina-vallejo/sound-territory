@@ -1,4 +1,8 @@
 /*--GENERALS-*/
+#mapcontainer * {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d; }
+
 body {
   padding: 0;
   margin: 0;
