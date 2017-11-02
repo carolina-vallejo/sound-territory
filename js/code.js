@@ -22,7 +22,7 @@
       updatesvg();
 
     });
-
+  //drawTilesMap(leafletMap);
   //--create svg layer
   var myRenderer = L.svg({ padding: 0 });
   myRenderer.addTo(leafletMap);
@@ -75,8 +75,9 @@
 
         for (var keys in topolayer._layers) {
           arrGeo.push(topolayer._layers[keys]._latlngs);
-          parseInt(getRnd(1, 500)) === 1 && arrRandom.push(topolayer._layers[keys]._latlngs);
+          //parseInt(getRnd(1, 500)) === 1 && arrRandom.push(topolayer._layers[keys]._latlngs);
         }
+
 
         //--ARR FOR ROUTES
         var arrGeoRoute = [];
@@ -88,7 +89,8 @@
             lng: dataroute.routes[0].geometry.coordinates[i][0]
           });
         }
-
+        console.log([arrGeoRoute][0][0]);
+        arrRandom.push([[arrGeoRoute][0][0]])
         pixiLayer(arrGeo, [arrGeoRoute]);
 
         console.log(arrRandom);
@@ -122,8 +124,10 @@
   var markers = L.layerGroup();
   leafletMap.addLayer(markers);
 
+  var perspective = 680;
+  var strTrans = 'translate3d(0,-60px,140px) rotateX(50deg) rotateZ(-30deg)';
+  var strUnTrans = 'rotateZ(30deg) rotateX(-50deg)';
 
-  var strTrans = 'rotateX(53deg) rotateZ(-25deg)';
 
 
   function updatesvg() {
@@ -142,16 +146,9 @@
 
       var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
       d3.select('#barra-' + i)
-        .attrs({
-          'class': 'barra-' + i,
-          'x': pointlatlng.x,
-          'y': pointlatlng.y - (100 * factor),
-          'width': 2 * factor,
-          'height': 100 * factor
-
-
+        .styles({
+          'transform': 'translate3d(' + pointlatlng.x + 'px,' + pointlatlng.y + 'px, 0px) ' + strUnTrans,
         })
-        .classed('child', true)
 
     }
 
@@ -170,6 +167,7 @@
     var latlng = L.latLng(dataMarker[0], dataMarker[1]);
     var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
 
+    console.log(latlng)
     var m = new L.Marker(latlng, { icon: markerIcon });
     markers.addLayer(m);
 
@@ -177,19 +175,36 @@
     var h_ = getRnd(10, 200);
     var h = 100;
 
+      var strs = transformCanvas.substring(transformCanvas.indexOf('(') + 1, transformCanvas.indexOf(')'));
+
+      var invertedTrans = 'translate3d(';
+      for(var i = 0; i < strs.split(', ').length; i++){
+        var val = parseInt(strs.split(', ')[i].replace('px', ''));
+        invertedTrans += (val * -1) + (i === strs.split(', ').length - 1 ? '' : 'px, ');
+      }
+
+      invertedTrans += ')';
+    
+
 
     markersContainer
       .append('div')
+      .attrs({
+        id: 'barra-' + counterBarras
+      })
       .styles({
         'margin-left': '-1px',
         'margin-top': '-120px',
         'width': '1px',
         'height': '120px',
         'background': 'red',
-        'transform': 'translate3d(' + pointlatlng.x + 'px,' + pointlatlng.y + 'px, 0px) rotateX(-60deg)',
+        'transform': 'translate3d(' + pointlatlng.x + 'px,' + pointlatlng.y + 'px, 0px) ' + strUnTrans,
         'transform-origin': 'center bottom'
       })
 
+
+
+      console.log(invertedTrans);
 
 
 
@@ -224,9 +239,9 @@
 
             d3.select('.leaflet-overlay-pane')
               .styles({
-                'perspective': '500px',
-                '-moz-perspective': '500px',
-                '-webkit-perspective': '500px'
+                'perspective': perspective + 'px',
+                '-moz-perspective': perspective + 'px',
+                '-webkit-perspective': perspective + 'px'
               });
 
             markersContainer = d3.select('.leaflet-pixi-overlay')
@@ -240,10 +255,14 @@
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                transform: 'rotateX(60deg)'
+                transform: strTrans
               });
 
+            transformCanvas = d3.select('.leaflet-pixi-overlay').style('transform');
+            console.log(transformCanvas);
+
             $('canvas').after($('.leaflet-marker-pane'));
+            //$('canvas').after($('.leaflet-tile-pane'))
 
             d3.select('.leaflet-marker-pane')
               .styles({
@@ -252,12 +271,28 @@
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                transform: 'rotateX(60deg)'
+                transform: strTrans
               });
+
+
+            /*
+            d3.select('.leaflet-tile-pane')
+              .styles({
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: strTrans
+              });              
+            */
+
             d3.select('canvas')
               .styles({
-                transform: 'rotateX(60deg)'
+                transform: strTrans
               });
+
+
 
             for (var i = arrRandom.length; i--;) {
 
@@ -265,6 +300,7 @@
             }
 
             function Riders(data) {
+              console.log(data[0][0])
 
               var numpart = data.length;
               // var numpart = 10;

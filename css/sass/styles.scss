@@ -10,8 +10,9 @@ $stroke-border:rgba($stroke, 1);
 /*--GENERALS-*/
 
 #mapcontainer * {
-  transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
 }
 
 body {
@@ -93,7 +94,10 @@ path {
 .leaflet-map-pane svg {
   z-index: 1;
 }
-
+.leaflet-control-container{
+  z-index: 9999;
+  position: relative;
+}
 #slider {
   position: fixed;
   bottom: 20px;
