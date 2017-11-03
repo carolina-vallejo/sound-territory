@@ -11,15 +11,23 @@
   var leafletMap = L.map('mapid', {
       minZoom: 1,
       maxZoom: 20,
+      //zoomAnimation:false
+      //minZoom : 13,
+      //maxZoom : 18
     })
     .setView(vlc)
     .setZoom(initZoom)
     .on('zoomend', function(e) {
-      var latlng = L.latLng(vlc[0], vlc[1]);
-      var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
+
+      updatesvg('onzoom');
 
 
-      updatesvg();
+    })
+    .on('moveend', function(e) {
+
+
+
+      updatesvg('moveend');
 
     });
   //drawTilesMap(leafletMap);
@@ -50,17 +58,6 @@
     d3.json('maps/vlc-map.json', function(error, datacoords) {
       if (error) throw error;
 
-
-
-
-
-
-
-
-
-
-
-      //crear random de coords unas 40 y guardarlas local, conectar recorridos
       var url_ = 'data.php?coordinates=-0.323168,39.465528|-0.368039,39.478622';
       var url = 'data/route2.json';
 
@@ -75,7 +72,7 @@
 
         for (var keys in topolayer._layers) {
           arrGeo.push(topolayer._layers[keys]._latlngs);
-          //parseInt(getRnd(1, 500)) === 1 && arrRandom.push(topolayer._layers[keys]._latlngs);
+          parseInt(getRnd(1, 500)) === 1 && arrRandom.push(topolayer._layers[keys]._latlngs);
         }
 
 
@@ -89,13 +86,10 @@
             lng: dataroute.routes[0].geometry.coordinates[i][0]
           });
         }
-        console.log([arrGeoRoute][0][0]);
-        arrRandom.push([[arrGeoRoute][0][0]])
+
+
+        arrRandom.push([[arrGeoRoute][0][0]]);
         pixiLayer(arrGeo, [arrGeoRoute]);
-
-        console.log(arrRandom);
-
-
 
       }); //---GET DATA
     }); //---ROUTE
@@ -130,7 +124,17 @@
 
 
 
-  function updatesvg() {
+  function updatesvg(theEvt) {
+
+     
+     var posLeafletPane = L.DomUtil.getPosition(d3.select('.leaflet-map-pane').node());
+
+   
+    var posPixi = getTransformPane(leafletMap);
+    markersContainer
+      .styles({
+        transform: strTrans + 'translate3d('+ (posPixi.x * -1) +'px, '+ (posPixi.y * -1) +'px, 0px)',
+      });
 
 
     for (var i = arrRandom.length; i--;) {
@@ -141,12 +145,15 @@
           (leafletMap.getZoom() - initZoom) + 1 : 1
         ) : 1;
 
-      console.log(leafletMap.getZoom() + ' initZoom ' + initZoom);
-      console.log('factor: ' + factor);
 
       var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
+
       d3.select('#barra-' + i)
         .styles({
+        'margin-left': '-'+ (1*factor) +'px',
+        'margin-top': '-'+(120*factor)+'px',
+        'width': (1*factor) + 'px',
+        'height': (120*factor) + 'px',          
           'transform': 'translate3d(' + pointlatlng.x + 'px,' + pointlatlng.y + 'px, 0px) ' + strUnTrans,
         })
 
@@ -167,24 +174,14 @@
     var latlng = L.latLng(dataMarker[0], dataMarker[1]);
     var pointlatlng = leafletMap.latLngToLayerPoint(latlng);
 
-    console.log(latlng)
-    var m = new L.Marker(latlng, { icon: markerIcon });
-    markers.addLayer(m);
+    //var m = new L.Marker(latlng, { icon: markerIcon });
+    //markers.addLayer(m);
 
 
     var h_ = getRnd(10, 200);
     var h = 100;
 
-      var strs = transformCanvas.substring(transformCanvas.indexOf('(') + 1, transformCanvas.indexOf(')'));
 
-      var invertedTrans = 'translate3d(';
-      for(var i = 0; i < strs.split(', ').length; i++){
-        var val = parseInt(strs.split(', ')[i].replace('px', ''));
-        invertedTrans += (val * -1) + (i === strs.split(', ').length - 1 ? '' : 'px, ');
-      }
-
-      invertedTrans += ')';
-    
 
 
     markersContainer
@@ -204,7 +201,7 @@
 
 
 
-      console.log(invertedTrans);
+
 
 
 
@@ -237,12 +234,17 @@
           if (firstDraw && prevZoom !== zoom) {
 
 
+
+
             d3.select('.leaflet-overlay-pane')
               .styles({
                 'perspective': perspective + 'px',
                 '-moz-perspective': perspective + 'px',
                 '-webkit-perspective': perspective + 'px'
               });
+
+
+            var pos = getTransformPane(leafletMap);
 
             markersContainer = d3.select('.leaflet-pixi-overlay')
               .append('div')
@@ -255,43 +257,15 @@
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                transform: strTrans
+                transform: strTrans + 'translate3d('+ (pos.x * -1) +'px, '+ (pos.y * -1) +'px, 0px)'
               });
 
-            transformCanvas = d3.select('.leaflet-pixi-overlay').style('transform');
-            console.log(transformCanvas);
-
-            $('canvas').after($('.leaflet-marker-pane'));
-            //$('canvas').after($('.leaflet-tile-pane'))
-
-            d3.select('.leaflet-marker-pane')
-              .styles({
-                width: '100%',
-                height: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                transform: strTrans
-              });
-
-
-            /*
-            d3.select('.leaflet-tile-pane')
-              .styles({
-                width: '100%',
-                height: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                transform: strTrans
-              });              
-            */
+          
 
             d3.select('canvas')
               .styles({
                 transform: strTrans
               });
-
 
 
             for (var i = arrRandom.length; i--;) {
@@ -300,7 +274,6 @@
             }
 
             function Riders(data) {
-              console.log(data[0][0])
 
               var numpart = data.length;
               // var numpart = 10;
@@ -478,7 +451,8 @@
 
 
           if (!firstDraw && prevZoom !== zoom) {
-            //console.log(zoom);
+            //console.log('zoom');
+ 
           }
           firstDraw = false;
           prevZoom = zoom;
@@ -488,6 +462,10 @@
         },
         pixiContainer);
       pixiOverlay.addTo(leafletMap);
+
+
+
+
 
 
     }); //---LOADER
@@ -518,6 +496,47 @@
 
   } //----PIXILAYER
 
+      function getTransformPane(map){
+        var elthis = map;
+        var p = 0.1,
+          mapSize = elthis.getSize(),
+          min = elthis.containerPointToLayerPoint(mapSize.multiplyBy(-p)).round();
+
+        elthis._bounds = new L.Bounds(min, min.add(mapSize.multiplyBy(1 + p * 2)).round());
+        elthis._center = elthis.getCenter();
+        elthis._zoom = elthis.getZoom();
+
+        var b = elthis._bounds,
+          container = elthis._container,
+          size = b.getSize();
+        
+          return b.min;
+   
+      }
+
+
+  function invertTransStr(selector) {
+
+    var transformation = d3.select(selector).style('transform');
+
+
+    var property = transformation.substring(0, transformation.indexOf('('));
+
+    var value = transformation.substring(transformation.indexOf('(') + 1, transformation.indexOf(')'));
+
+    var invertedTrans = property + '(';
+
+    for (var i = 0; i < value.split(', ').length; i++) {
+
+      var val = parseInt(value.split(', ')[i].replace('px', ''));
+      invertedTrans += (val * -1) + (i === value.split(', ').length - 1 ? 'px' : 'px, ');
+    }
+
+    invertedTrans += ')';
+
+
+    return invertedTrans;
+  }
 
   function getRnd(max, min) {
     return Math.random() * (max - min) + min;
