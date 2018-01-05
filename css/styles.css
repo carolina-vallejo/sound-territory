@@ -1,14 +1,8 @@
 /*--GENERALS-*/
-#mapcontainer * {
-  -webkit-transform-style: preserve-3d;
-  -moz-transform-style: preserve-3d;
-  transform-style: preserve-3d; }
-
 body {
   padding: 0;
   margin: 0;
-  overflow: hidden;
-  background: #e7e5df; }
+  overflow: hidden; }
 
 .btn-input {
   display: block;
@@ -16,7 +10,7 @@ body {
   -moz-appearance: none;
   text-shadow: none;
   box-shadow: none;
-  padding: 5px 15px;
+  padding: 5px;
   margin: 5px;
   border-radius: 0;
   background: rgba(231, 229, 223, 0.8);
@@ -49,9 +43,9 @@ path {
   background: #e7e5df; }
 
 .leaflet-tile-pane {
-  opacity: 1;
-  filter: grayscale(0%);
-  -webkit-filter: grayscale(0%); }
+  opacity: 0.2;
+  filter: grayscale(100%);
+  -webkit-filter: grayscale(100%); }
 
 .controls {
   position: absolute;
@@ -71,11 +65,7 @@ path {
   left: 0; }
 
 .leaflet-map-pane svg {
-  z-index: 1; }
-
-.leaflet-control-container {
-  z-index: 9999;
-  position: relative; }
+  z-index: auto; }
 
 #slider {
   position: fixed;
@@ -134,7 +124,7 @@ path {
   background-color: #25282d; }
 
 canvas {
-  background: transparent; }
+  background: #e7e5df; }
 
 .spinner {
   width: 40px;
@@ -148,10 +138,9 @@ canvas {
   -moz-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
   opacity: 1;
-  transition: opacity 500ms ease; }
+  transition: opacity 300ms ease; }
   .spinner.stop {
-    opacity: 0;
-    pointer-events: none; }
+    opacity: 0; }
     .spinner.stop .double-bounce1,
     .spinner.stop .double-bounce2 {
       -webkit-animation: none;
